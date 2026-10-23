@@ -81,7 +81,12 @@ def generate(host, endpoints, model="sonnet", generator="claude"):
             "or use `mimic gen --prompt-only`"
         )
     if proc.returncode != 0:
-        sys.exit(f"{generator} failed:\n{proc.stderr}")
+        # Claude Code prints failures like "Not logged in" on stdout, so falling
+        # back to it keeps the real reason from being reported as a bare colon.
+        detail = (proc.stderr or "").strip() or (proc.stdout or "").strip()
+        if not detail:
+            detail = f"exit status {proc.returncode}"
+        sys.exit(f"{generator} failed:\n{detail}")
     return _strip_fences(proc.stdout)
 
 
